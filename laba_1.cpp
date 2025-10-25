@@ -166,6 +166,72 @@ void work_with_dynamic_array() {
     delete[] arr;
 }
 
+template<typename T>
+struct Node {
+    T data;
+    Node* next;
+
+    Node(const T& value) : data(value), next(nullptr) {}
+};
+
+template<typename T>
+class list_stack {
+private:
+    Node<T>* top_node;
+
+public:
+    list_stack() : top_node(nullptr) {}
+
+    ~list_stack() {
+        while (!empty()) {
+            pop();
+        }
+    }
+
+    void push(const T& value) {
+        Node<T>* new_node = new Node<T>(value);
+        new_node->next = top_node;
+        top_node = new_node;
+    }
+
+    void pop() {
+        if (empty()) {
+            throw runtime_error("Stack is empty");
+        }
+        Node<T>* temp = top_node;
+        top_node = top_node->next;
+        delete temp;
+    }
+
+    T& top() {
+        if (empty()) {
+            throw runtime_error("Stack is empty");
+        }
+        return top_node->data;
+    }
+
+    const T& top() const {
+        if (empty()) {
+            throw runtime_error("Stack is empty");
+        }
+        return top_node->data;
+    }
+
+    bool empty() const {
+        return top_node == nullptr;
+    }
+
+    size_t size() const {
+        size_t count = 0;
+        Node<T>* current = top_node;
+        while (current != nullptr) {
+            count++;
+            current = current->next;
+        }
+        return count;
+    }
+};
+
 bool is_operator(char c) {
     return c == '+' || c == '-' || c == '*' || c == '/' || c == '^';
 }
@@ -182,13 +248,13 @@ int priority(char a) {
 }
 
 string reverse_Polish_notation(string infix) {
-    stack<string> s;
+    list_stack<string> s;  
     string postfix;
     string current_token;
 
     for (int i = 0; i < infix.size(); i++) {
         char c = infix[i];
-        if (c == ' ') 
+        if (c == ' ')
             continue;
 
         if (isalpha(c)) {
@@ -241,7 +307,7 @@ string reverse_Polish_notation(string infix) {
 }
 
 double evaluate_postfix(const string& postfix) {
-    stack<double> s;
+    list_stack<double> s;  
     string token;
 
     for (int i = 0; i < postfix.size(); i++) {
@@ -252,33 +318,33 @@ double evaluate_postfix(const string& postfix) {
                     s.push(stod(token));
                 }
                 else if (is_math_function(token)) {
-                    if (s.empty()) 
+                    if (s.empty())
                         throw runtime_error("Недостаточно операндов для функции");
-                    double arg = s.top(); 
+                    double arg = s.top();
                     s.pop();
-                    if (token == "sin") 
+                    if (token == "sin")
                         s.push(sin(arg));
-                    else if (token == "cos") 
+                    else if (token == "cos")
                         s.push(cos(arg));
                 }
                 else if (is_operator(token[0]) && token.length() == 1) {
-                    if (s.size() < 2) 
+                    if (s.size() < 2)
                         throw runtime_error("Недостаточно операндов для оператора");
                     double b = s.top(); s.pop();
                     double a = s.top(); s.pop();
                     switch (token[0]) {
-                    case '+': s.push(a + b); 
+                    case '+': s.push(a + b);
                         break;
-                    case '-': s.push(a - b); 
+                    case '-': s.push(a - b);
                         break;
-                    case '*': s.push(a * b); 
+                    case '*': s.push(a * b);
                         break;
                     case '/':
-                        if (b == 0) 
+                        if (b == 0)
                             throw runtime_error("Деление на ноль");
-                        s.push(a / b); 
+                        s.push(a / b);
                         break;
-                    case '^': s.push(pow(a, b)); 
+                    case '^': s.push(pow(a, b));
                         break;
                     }
                 }
@@ -296,10 +362,11 @@ double evaluate_postfix(const string& postfix) {
 
 int main() {
     setlocale(0, "");
-    
+
     string expression;
 
     cout << "Реализация алгоритма сортировочной станции" << endl;
+    cout << "Стек реализован на базе списка" << endl;
     cout << "Введите выражение: ";
 
     while (getline(cin, expression)) {
@@ -311,9 +378,13 @@ int main() {
         string postfix = reverse_Polish_notation(expression);
         cout << "Обратная польская нотация: " << postfix << endl;
 
+        try {
             double result = evaluate_postfix(postfix);
             cout << "Результат: " << result << endl;
-
+        }
+        catch (const exception& e) {
+            cout << "Ошибка: " << e.what() << endl;
+        }
 
         cout << "\nВведите следующее выражение (или '0' для выхода): ";
     }
